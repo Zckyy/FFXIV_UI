@@ -24,7 +24,7 @@ frame.runes = {}
 
 local function PlayGaugeSFX(filePath)
     if not FFXIV_UI_DB or not FFXIV_UI_DB.sfxEnabled then return end
-    PlaySoundFile(filePath, "Master")
+    FFXIV_UI_PlaySoundFile(filePath)
 end
 
 local RUNE_POSITIONS = {

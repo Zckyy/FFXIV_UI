@@ -124,7 +124,7 @@ local function Update()
     local maxHp = UnitHealthMax("player")
  
     bar:SetMinMaxValues(0, maxHp)
-    bar:SetValue(hp)
+    bar:SetValue(hp, Enum.StatusBarInterpolation.ExponentialEaseOut)
     text:SetText(hp)
 
 
@@ -133,10 +133,12 @@ local function Update()
 
 end
 
+FFXIV_UI_UpdatePlayerHealth = Update
+
  
 f:RegisterEvent("PLAYER_ENTERING_WORLD")
-f:RegisterEvent("UNIT_HEALTH")
-f:RegisterEvent("UNIT_MAXHEALTH")
+f:RegisterUnitEvent("UNIT_HEALTH", "player")
+f:RegisterUnitEvent("UNIT_MAXHEALTH", "player")
 f:RegisterEvent("PLAYER_REGEN_DISABLED")  
 f:RegisterEvent("PLAYER_REGEN_ENABLED")   
 f:RegisterEvent("PLAYER_LOGIN")

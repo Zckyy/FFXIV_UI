@@ -269,7 +269,7 @@ local function Update()
 
         local inCombatWithTarget = UnitAffectingCombat("player") and UnitCanAttack("player","target")
 
-        if inCombatWithTarget then
+        if FFXIV_UI_DB.showTargetHPPercent or inCombatWithTarget then
             hpPercentText:SetText(string.format(
                 "%.0f%%",
                 UnitHealthPercent("target", true, CurveConstants.ScaleTo100)
@@ -301,6 +301,8 @@ local function Update()
     end
 end
 
+FFXIV_UI_UpdateTargetHealth = Update
+
 local function targetChanged()
    local hp = UnitHealth("target")
      bar:SetValue(hp)
@@ -311,8 +313,8 @@ end
 
 f:RegisterEvent("PLAYER_ENTERING_WORLD")
 f:RegisterEvent("PLAYER_TARGET_CHANGED")
-f:RegisterEvent("UNIT_HEALTH")
-f:RegisterEvent("UNIT_MAXHEALTH")
+f:RegisterUnitEvent("UNIT_HEALTH", "target")
+f:RegisterUnitEvent("UNIT_MAXHEALTH", "target")
 f:RegisterEvent("PLAYER_REGEN_DISABLED")
 f:RegisterEvent("PLAYER_REGEN_ENABLED")
 f:RegisterEvent("RAID_TARGET_UPDATE")

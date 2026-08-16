@@ -136,13 +136,24 @@ local function UpdateXP()
     xpPercent:SetText(string.format("(%.0f%%)", percent))
 end
 
+function FFXIV_UI_UpdateXPVisibility()
+    local mode = FFXIV_UI_DB and FFXIV_UI_DB.xpBarVisibility or "always"
+    local shouldHide = mode == "hidden" or (mode == "combat" and InCombatLockdown())
+    f:SetShown(not shouldHide)
+end
+
 f:RegisterEvent("PLAYER_ENTERING_WORLD")
 f:RegisterEvent("PLAYER_XP_UPDATE")
 f:RegisterEvent("PLAYER_LEVEL_UP")
 f:RegisterEvent("PLAYER_UPDATE_RESTING")
 f:RegisterEvent("ZONE_CHANGED")
 f:RegisterEvent("ZONE_CHANGED_NEW_AREA")
+f:RegisterEvent("PLAYER_REGEN_DISABLED")
+f:RegisterEvent("PLAYER_REGEN_ENABLED")
 
-f:SetScript("OnEvent", UpdateXP)
+f:SetScript("OnEvent", function()
+    UpdateXP()
+    FFXIV_UI_UpdateXPVisibility()
+end)
 UpdateXP()
- 
+FFXIV_UI_UpdateXPVisibility()

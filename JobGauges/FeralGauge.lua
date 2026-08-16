@@ -10,7 +10,7 @@ local FADE_TIME = 0.2
 local gaugeFullSFX = "Interface\\AddOns\\FFXIV_UI\\Media\\Audio\\FFXIV_Gauge_Full.ogg"
 local function PlayGaugeSFX(filePath)
     if FFXIV_UI_DB and FFXIV_UI_DB.sfxEnabled then
-        PlaySoundFile(filePath, "Master")
+        FFXIV_UI_PlaySoundFile(filePath)
     end
 end
  

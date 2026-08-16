@@ -71,7 +71,7 @@ local function PlayCustomSFX(fileName)
 
     DebugPrint("Attempting to play:", path)
 
-    PlaySoundFile(path, "SFX")
+    FFXIV_UI_PlaySoundFile(path)
 end
 
 

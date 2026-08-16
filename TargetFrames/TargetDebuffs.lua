@@ -41,6 +41,7 @@ rootFrame:SetFlowLayoutGrowthDirection(AnchorUtil.FlowDirection.Right, AnchorUti
 rootFrame:SetUnit("target")
 
 local harmfulFilter = AuraUtil.CreateFilterString(AuraUtil.AuraFilters.Harmful)
+local playerHarmfulFilter = "HARMFUL|PLAYER"
 
 local function InitializeAuraSlot(slot)
     slot:SetSize(AURA_ICON_SIZE, AURA_ICON_SIZE)
@@ -109,6 +110,14 @@ rootFrame:AddAuraGroup("debuffs", harmfulFilter, {
 })
 rootFrame:SetAuraGroupLayout("debuffs", { elementSpacingX = AURA_GAP })
 rootFrame:SetEnabled(true)
+
+function FFXIV_UI_UpdateTargetDebuffFilter()
+    local filter = FFXIV_UI_DB and FFXIV_UI_DB.playerDebuffsOnly and playerHarmfulFilter or harmfulFilter
+    rootFrame:SetAuraGroupFilterString("debuffs", filter)
+    rootFrame:UpdateAllAuras()
+end
+
+FFXIV_UI_UpdateTargetDebuffFilter()
 
 local eventWatcher = CreateFrame("Frame")
 eventWatcher:SetScript("OnEvent", function(self, event)

@@ -3,6 +3,37 @@
     FFXIV_UI_Anchors = FFXIV_UI_Anchors or {}
     FFXIV_UI_DB = FFXIV_UI_DB or {}
 
+    local settingDefaults = {
+        xpBarVisibility = "always",
+        showTargetHPPercent = false,
+        fastBarUpdates = false,
+        soundChannel = "SFX",
+        playerDebuffsOnly = false,
+    }
+
+    for key, value in pairs(settingDefaults) do
+        if FFXIV_UI_DB[key] == nil then
+            FFXIV_UI_DB[key] = value
+        end
+    end
+
+    local validSoundChannels = {
+        Master = true,
+        SFX = true,
+        Music = true,
+        Ambience = true,
+        Dialog = true,
+    }
+
+    function FFXIV_UI_GetSoundChannel()
+        local channel = FFXIV_UI_DB and FFXIV_UI_DB.soundChannel
+        return validSoundChannels[channel] and channel or "SFX"
+    end
+
+    function FFXIV_UI_PlaySoundFile(path)
+        return PlaySoundFile(path, FFXIV_UI_GetSoundChannel())
+    end
+
     local anchorConfigs = {
         { key = "ExpBar",        label = "Experience Bar",     w = 800, h = 25,  scale = 1.0, pos = {"BOTTOM", 0, 30} },
         { key = "JobGauge",      label = "Job Gauge",          w = 150, h = 100,  scale = 1.0, pos = {"CENTER", 400, -150} },
@@ -185,9 +216,9 @@
         anchorsUnlocked = not anchorsUnlocked
         FFXIV_UI_SetAnchorsUnlocked(anchorsUnlocked) 
         if anchorsUnlocked then
-            PlaySoundFile(soundOn, "Master")
+            FFXIV_UI_PlaySoundFile(soundOn)
         else
-            PlaySoundFile(soundOff, "Master")
+            FFXIV_UI_PlaySoundFile(soundOff)
         end
     end
 
@@ -254,9 +285,9 @@ toggleAnchors:SetScript("OnClick", function()
     FFXIV_UI_SetAnchorsUnlocked(anchorsUnlocked)
 
     if anchorsUnlocked then
-        PlaySoundFile(soundOn, "Master")
+        FFXIV_UI_PlaySoundFile(soundOn)
     else
-        PlaySoundFile(soundOff, "Master")
+        FFXIV_UI_PlaySoundFile(soundOff)
     end
 
     UpdateToggleButtonText()
@@ -377,6 +408,148 @@ completeDropdown:SetScript("OnShow", function(self)
     UIDropDownMenu_SetText(self, QuestCompleteSoundNames[current])
 
 end)
+
+-- Sound Channel Dropdown
+
+local SoundChannelOptions = {
+    { label = "Master", value = "Master" },
+    { label = "Sound Effects", value = "SFX" },
+    { label = "Music", value = "Music" },
+    { label = "Ambience", value = "Ambience" },
+    { label = "Dialog", value = "Dialog" },
+}
+
+local soundChannelLabel = options:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+soundChannelLabel:SetPoint("TOPLEFT", completeDropdown, "BOTTOMLEFT", 16, -16)
+soundChannelLabel:SetText("Sound Channel")
+
+local soundChannelDropdown = CreateFrame("Frame", "FFXIV_UI_SoundChannelDropdown", options, "UIDropDownMenuTemplate")
+soundChannelDropdown:SetPoint("TOPLEFT", soundChannelLabel, "BOTTOMLEFT", -16, -6)
+UIDropDownMenu_SetWidth(soundChannelDropdown, 180)
+
+local function RefreshSoundChannelDropdown()
+    local current = FFXIV_UI_GetSoundChannel()
+    for i, option in ipairs(SoundChannelOptions) do
+        if option.value == current then
+            UIDropDownMenu_SetSelectedID(soundChannelDropdown, i)
+            UIDropDownMenu_SetText(soundChannelDropdown, option.label)
+            return
+        end
+    end
+end
+
+UIDropDownMenu_Initialize(soundChannelDropdown, function()
+    for i, option in ipairs(SoundChannelOptions) do
+        local label, value = option.label, option.value
+        local info = UIDropDownMenu_CreateInfo()
+        info.text = label
+        info.checked = FFXIV_UI_GetSoundChannel() == value
+        info.func = function()
+            FFXIV_UI_DB.soundChannel = value
+            RefreshSoundChannelDropdown()
+        end
+        UIDropDownMenu_AddButton(info)
+    end
+end)
+soundChannelDropdown:SetScript("OnShow", RefreshSoundChannelDropdown)
+
+-- Display and unit-frame options
+
+local gameplayTitle = options:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
+gameplayTitle:SetPoint("TOPLEFT", options, "TOPLEFT", 350, -92)
+gameplayTitle:SetText("Display")
+
+local xpVisibilityOptions = {
+    { label = "Always Show", value = "always" },
+    { label = "Hide in Combat", value = "combat" },
+    { label = "Always Hidden", value = "hidden" },
+}
+
+local xpVisibilityLabel = options:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+xpVisibilityLabel:SetPoint("TOPLEFT", gameplayTitle, "BOTTOMLEFT", 0, -16)
+xpVisibilityLabel:SetText("Experience Bar")
+
+local xpVisibilityDropdown = CreateFrame("Frame", "FFXIV_UI_XPVisibilityDropdown", options, "UIDropDownMenuTemplate")
+xpVisibilityDropdown:SetPoint("TOPLEFT", xpVisibilityLabel, "BOTTOMLEFT", -16, -6)
+UIDropDownMenu_SetWidth(xpVisibilityDropdown, 180)
+
+local function RefreshXPVisibilityDropdown()
+    local current = FFXIV_UI_DB.xpBarVisibility or "always"
+    for i, option in ipairs(xpVisibilityOptions) do
+        if option.value == current then
+            UIDropDownMenu_SetSelectedID(xpVisibilityDropdown, i)
+            UIDropDownMenu_SetText(xpVisibilityDropdown, option.label)
+            return
+        end
+    end
+end
+
+UIDropDownMenu_Initialize(xpVisibilityDropdown, function()
+    for _, option in ipairs(xpVisibilityOptions) do
+        local label, value = option.label, option.value
+        local info = UIDropDownMenu_CreateInfo()
+        info.text = label
+        info.checked = FFXIV_UI_DB.xpBarVisibility == value
+        info.func = function()
+            FFXIV_UI_DB.xpBarVisibility = value
+            RefreshXPVisibilityDropdown()
+            if FFXIV_UI_UpdateXPVisibility then FFXIV_UI_UpdateXPVisibility() end
+        end
+        UIDropDownMenu_AddButton(info)
+    end
+end)
+xpVisibilityDropdown:SetScript("OnShow", RefreshXPVisibilityDropdown)
+
+local function CreateOptionCheckButton(name, label, relativeTo, offsetY, settingKey, onChanged)
+    local checkButton = CreateFrame("CheckButton", name, options, "InterfaceOptionsCheckButtonTemplate")
+    checkButton:SetPoint("TOPLEFT", relativeTo, "BOTTOMLEFT", 0, offsetY)
+    checkButton.Text:SetText(label)
+    checkButton.Text:SetFont("Interface\\AddOns\\FFXIV_UI\\Media\\Fonts\\AxisRegular.ttf", 12)
+    checkButton:SetScript("OnShow", function(self)
+        self:SetChecked(FFXIV_UI_DB[settingKey])
+    end)
+    checkButton:SetScript("OnClick", function(self)
+        FFXIV_UI_DB[settingKey] = self:GetChecked()
+        if onChanged then onChanged() end
+    end)
+    return checkButton
+end
+
+local targetHPPercentCB = CreateOptionCheckButton(
+    "FFXIV_UI_TargetHPPercentCheck",
+    "Always show target HP percentage",
+    xpVisibilityDropdown,
+    -12,
+    "showTargetHPPercent",
+    function()
+        if FFXIV_UI_UpdateTargetHealth then FFXIV_UI_UpdateTargetHealth() end
+    end
+)
+
+local fastBarsCB = CreateOptionCheckButton(
+    "FFXIV_UI_FastBarsCheck",
+    "Fast player/target bar updates",
+    targetHPPercentCB,
+    -8,
+    "fastBarUpdates",
+    function()
+        if FFXIV_UI_UpdatePlayerHealth then FFXIV_UI_UpdatePlayerHealth() end
+        if FFXIV_UI_UpdatePlayerPower then FFXIV_UI_UpdatePlayerPower() end
+        if FFXIV_UI_UpdateTargetHealth then FFXIV_UI_UpdateTargetHealth() end
+    end
+)
+
+local playerDebuffsCB = CreateOptionCheckButton(
+    "FFXIV_UI_PlayerDebuffsOnlyCheck",
+    "Only show your debuffs on target",
+    fastBarsCB,
+    -8,
+    "playerDebuffsOnly",
+    function()
+        if FFXIV_UI_UpdateTargetDebuffFilter then FFXIV_UI_UpdateTargetDebuffFilter() end
+    end
+)
+
 local function UpdateAudioOptionsState()
     local enabled = FFXIV_UI_DB.sfxEnabled
     cb:SetChecked(enabled)
@@ -385,11 +558,13 @@ local function UpdateAudioOptionsState()
     errorCB:SetEnabled(enabled)
     acceptDropdown:EnableMouse(enabled)
     completeDropdown:EnableMouse(enabled)
+    soundChannelDropdown:EnableMouse(enabled)
     
  
     errorCB.Text:SetTextColor(enabled and 1 or 0.5, enabled and 1 or 0.5, enabled and 1 or 0.5)
     acceptLabel:SetTextColor(enabled and 1 or 0.5, enabled and 1 or 0.5, enabled and 1 or 0.5)
     completeLabel:SetTextColor(enabled and 1 or 0.5, enabled and 1 or 0.5, enabled and 1 or 0.5)
+    soundChannelLabel:SetTextColor(enabled and 1 or 0.5, enabled and 1 or 0.5, enabled and 1 or 0.5)
 end
 
  
@@ -447,7 +622,7 @@ acceptPreview:SetScript("OnClick", function()
         elseif idx == 8 then
             soundFile = "Interface\\AddOns\\FFXIV_UI\\Media\\Audio\\FFXIV_Quest_Accepted_Tribal.ogg"
         end
-        if soundFile then PlaySoundFile(soundFile, "Master") end
+        if soundFile then FFXIV_UI_PlaySoundFile(soundFile) end
     end
 end)
 
@@ -478,7 +653,7 @@ completePreview:SetScript("OnClick", function()
         elseif idx == 7 then
             soundFile = "Interface\\AddOns\\FFXIV_UI\\Media\\Audio\\FFXIV_Quest_Complete_Island.ogg"
         end
-        if soundFile then PlaySoundFile(soundFile, "Master") end
+        if soundFile then FFXIV_UI_PlaySoundFile(soundFile) end
     end
 end)
 
@@ -511,7 +686,7 @@ end)
         if key == "ESCAPE" and anchorsUnlocked then
             anchorsUnlocked = false
             FFXIV_UI_SetAnchorsUnlocked(false)
-            PlaySoundFile(soundOff, "Master")
+            FFXIV_UI_PlaySoundFile(soundOff)
   
         end
     end)
@@ -529,7 +704,7 @@ end)
             if anchorsUnlocked then
                 anchorsUnlocked = false
                 FFXIV_UI_SetAnchorsUnlocked(false)
-                PlaySoundFile(soundOff, "Master")
+                FFXIV_UI_PlaySoundFile(soundOff)
              
             end
 
@@ -606,9 +781,9 @@ end)
                 FFXIV_UI_SetAnchorsUnlocked(anchorsUnlocked)
 
                 if anchorsUnlocked then
-                    PlaySoundFile(soundOn, "Master")
+                    FFXIV_UI_PlaySoundFile(soundOn)
                 else
-                    PlaySoundFile(soundOff, "Master")
+                    FFXIV_UI_PlaySoundFile(soundOff)
                 end
             end
         end
