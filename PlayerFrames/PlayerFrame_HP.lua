@@ -133,8 +133,6 @@ local function Update()
 
 end
 
-FFXIV_UI_UpdatePlayerHealth = Update
-
  
 f:RegisterEvent("PLAYER_ENTERING_WORLD")
 f:RegisterUnitEvent("UNIT_HEALTH", "player")

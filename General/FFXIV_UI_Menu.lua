@@ -6,7 +6,6 @@
     local settingDefaults = {
         xpBarVisibility = "always",
         showTargetHPPercent = false,
-        fastBarUpdates = false,
         soundChannel = "SFX",
         playerDebuffsOnly = false,
     }
@@ -526,23 +525,10 @@ local targetHPPercentCB = CreateOptionCheckButton(
     end
 )
 
-local fastBarsCB = CreateOptionCheckButton(
-    "FFXIV_UI_FastBarsCheck",
-    "Fast player/target bar updates",
-    targetHPPercentCB,
-    -8,
-    "fastBarUpdates",
-    function()
-        if FFXIV_UI_UpdatePlayerHealth then FFXIV_UI_UpdatePlayerHealth() end
-        if FFXIV_UI_UpdatePlayerPower then FFXIV_UI_UpdatePlayerPower() end
-        if FFXIV_UI_UpdateTargetHealth then FFXIV_UI_UpdateTargetHealth() end
-    end
-)
-
 local playerDebuffsCB = CreateOptionCheckButton(
     "FFXIV_UI_PlayerDebuffsOnlyCheck",
     "Only show your debuffs on target",
-    fastBarsCB,
+    targetHPPercentCB,
     -8,
     "playerDebuffsOnly",
     function()

@@ -77,16 +77,10 @@ f:SetParent(anchor)
 f:ClearAllPoints()
 f:SetPoint("CENTER", anchor, "CENTER", 0, 0)
 
-local lastPower
-local lastPowerType
-
 local function Update()
     local powerType, powerToken = UnitPowerType("player") 
     local power = UnitPower("player", powerType)
     local maxPower = UnitPowerMax("player", powerType)
-
-    lastPower = power
-    lastPowerType = powerType
 
     bar:SetMinMaxValues(0, maxPower)
     bar:SetValue(power, Enum.StatusBarInterpolation.ExponentialEaseOut)
@@ -139,33 +133,8 @@ local function Update()
     text:SetText(power)
 end
 
-local function PollPlayerPower()
-    local powerType = UnitPowerType("player")
-    local power = UnitPower("player", powerType)
-
-    if powerType ~= lastPowerType or power ~= lastPower then
-        Update()
-    end
-end
-
-local function ConfigurePowerUpdateEvent()
-    f:UnregisterEvent("UNIT_POWER_UPDATE")
-    f:UnregisterEvent("UNIT_POWER_FREQUENT")
-    f:RegisterUnitEvent("UNIT_POWER_FREQUENT", "player")
-
-    if FFXIV_UI_DB and FFXIV_UI_DB.fastBarUpdates then
-        f:SetScript("OnUpdate", PollPlayerPower)
-    else
-        f:SetScript("OnUpdate", nil)
-    end
-end
-
-function FFXIV_UI_UpdatePlayerPower()
-    ConfigurePowerUpdateEvent()
-    Update()
-end
-
 f:RegisterEvent("PLAYER_ENTERING_WORLD")
+f:RegisterUnitEvent("UNIT_POWER_FREQUENT", "player")
 f:RegisterUnitEvent("UNIT_MAXPOWER", "player")
 f:RegisterUnitEvent("UNIT_DISPLAYPOWER", "player")
 
@@ -175,6 +144,6 @@ f:SetScript("OnEvent", function(_, event, unit)
     end
 end)
 
-FFXIV_UI_UpdatePlayerPower()
+Update()
 
  
